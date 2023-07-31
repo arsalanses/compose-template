@@ -25,7 +25,7 @@ services:
         labels:
             - "traefik.enable=true"
             - "traefik.docker.network=proxy"
-            - "traefik.http.routers.to-conduit.rule=Host(`<SUBDOMAIN>.<DOMAIN>`)"
+            - "traefik.http.routers.to-conduit.rule=Host(`chat.arsalanses.ir`)"
             - "traefik.http.routers.to-conduit.tls=true"
             - "traefik.http.routers.to-conduit.tls.certresolver=letsencrypt"
             - "traefik.http.routers.to-conduit.middlewares=cors-headers@docker"
@@ -42,7 +42,7 @@ services:
         labels:
             - "traefik.enable=true"
             - "traefik.docker.network=proxy"
-            - "traefik.http.routers.to-matrix-wellknown.rule=Host(`<SUBDOMAIN>.<DOMAIN>`) && PathPrefix(`/.well-known/matrix`)"
+            - "traefik.http.routers.to-matrix-wellknown.rule=Host(`chat.arsalanses.ir`) && PathPrefix(`/.well-known/matrix`)"
             - "traefik.http.routers.to-matrix-wellknown.tls=true"
             - "traefik.http.routers.to-matrix-wellknown.tls.certresolver=letsencrypt"
             - "traefik.http.routers.to-matrix-wellknown.middlewares=cors-headers@docker"
