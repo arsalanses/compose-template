@@ -1,0 +1,96 @@
+services:
+    conduit:
+        image: matrixconduit/matrix-conduit:latest
+        restart: unless-stopped
+        volumes:
+            - db:/srv/conduit/.local/share/conduit
+            # - ./conduit.toml:/srv/conduit/conduit.toml
+        networks:
+            - proxy
+        environment:
+            CONDUIT_SERVER_NAME: localhost:6167
+            CONDUIT_TRUSTED_SERVERS: '["matrix.org"]'
+            CONDUIT_ALLOW_REGISTRATION : 'true'
+            # CONDUIT_ADDRESS: 0.0.0.0
+            # CONDUIT_PORT: 6167
+            # CONDUIT_CONFIG: '/srv/conduit/conduit.toml'
+            # CONDUIT_LOG: info
+            # CONDUIT_ALLOW_JAEGER: 'false'
+            # CONDUIT_ALLOW_ENCRYPTION: 'true'
+            # CONDUIT_ALLOW_FEDERATION: 'true'
+            # CONDUIT_ALLOW_CHECK_FOR_UPDATES: 'true'
+            # CONDUIT_DATABASE_PATH: /srv/conduit/.local/share/conduit
+            # CONDUIT_WORKERS: 10
+            # CONDUIT_MAX_REQUEST_SIZE: 20_000_000
+        labels:
+            - "traefik.enable=true"
+            - "traefik.docker.network=proxy"
+            - "traefik.http.routers.to-conduit.rule=Host(`<SUBDOMAIN>.<DOMAIN>`)"
+            - "traefik.http.routers.to-conduit.tls=true"
+            - "traefik.http.routers.to-conduit.tls.certresolver=letsencrypt"
+            - "traefik.http.routers.to-conduit.middlewares=cors-headers@docker"
+            - "traefik.http.middlewares.cors-headers.headers.accessControlAllowOriginList=*"
+            - "traefik.http.middlewares.cors-headers.headers.accessControlAllowHeaders=Origin, X-Requested-With, Content-Type, Accept, Authorization"
+            - "traefik.http.middlewares.cors-headers.headers.accessControlAllowMethods=GET, POST, PUT, DELETE, OPTIONS"
+
+    well-known:
+        image: nginx:latest
+        restart: unless-stopped
+        volumes:
+            - ./nginx/matrix.conf:/etc/nginx/conf.d/matrix.conf
+            - ./nginx/www:/var/www/
+        labels:
+            - "traefik.enable=true"
+            - "traefik.docker.network=proxy"
+            - "traefik.http.routers.to-matrix-wellknown.rule=Host(`<SUBDOMAIN>.<DOMAIN>`) && PathPrefix(`/.well-known/matrix`)"
+            - "traefik.http.routers.to-matrix-wellknown.tls=true"
+            - "traefik.http.routers.to-matrix-wellknown.tls.certresolver=letsencrypt"
+            - "traefik.http.routers.to-matrix-wellknown.middlewares=cors-headers@docker"
+            - "traefik.http.middlewares.cors-headers.headers.accessControlAllowOriginList=*"
+            - "traefik.http.middlewares.cors-headers.headers.accessControlAllowHeaders=Origin, X-Requested-With, Content-Type, Accept, Authorization"
+            - "traefik.http.middlewares.cors-headers.headers.accessControlAllowMethods=GET, POST, PUT, DELETE, OPTIONS"
+
+    # element-web:
+    #     image: vectorim/element-web:latest
+    #     restart: unless-stopped
+    #     volumes:
+    #         - ./element_config.json:/app/config.json
+    #     networks:
+    #         - proxy
+    #     depends_on:
+    #         - conduit
+    #     labels:
+    #         - "traefik.enable=true"
+    #         - "traefik.docker.network=proxy"
+    #         - "traefik.http.routers.to-element-web.rule=Host(`<SUBDOMAIN>.<DOMAIN>`)"
+    #         - "traefik.http.routers.to-element-web.tls=true"
+    #         - "traefik.http.routers.to-element-web.tls.certresolver=letsencrypt"
+
+    traefik:
+        image: "traefik:latest"
+        container_name: "traefik"
+        restart: "unless-stopped"
+        ports:
+            - "80:80"
+            - "443:443"
+        volumes:
+            - "/var/run/docker.sock:/var/run/docker.sock"
+            # - "./traefik_config:/etc/traefik"
+            - "acme:/etc/traefik/acme"
+        labels:
+            - "traefik.enable=true"
+            # middleware redirect
+            - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+            # global redirect to https
+            - "traefik.http.routers.redirs.rule=hostregexp(`{host:.+}`)"
+            - "traefik.http.routers.redirs.entrypoints=http"
+            - "traefik.http.routers.redirs.middlewares=redirect-to-https"
+        networks:
+            - proxy
+
+volumes:
+    db:
+    acme:
+
+networks:
+    proxy:
