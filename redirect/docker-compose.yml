@@ -1,4 +1,5 @@
-redirect:
+services:
+  redirect:
     image: traefik/whoami
     container_name: "blog-redirect"
     restart: always

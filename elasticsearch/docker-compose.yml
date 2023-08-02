@@ -1,0 +1,44 @@
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.9
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=true
+      - ELASTIC_PASSWORD=changeme
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms2g -Xmx2g"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    ports:
+      - 0.0.0.0:12121:9200
+      # - 9300:9300
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+    labels:
+      - "traefik.enable=false"
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.13.1
+    environment:
+      - ELASTICSEARCH_HOSTS="http://elasticsearch:9200"
+      - ELASTICSEARCH_USERNAME=elastic
+      - ELASTICSEARCH_PASSWORD=changeme
+    ports: 
+      - '127.0.0.1:5601:5601'
+    networks:
+      - 'web'
+    depends_on:
+      - 'elasticsearch'
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: "web"
+      traefik.http.routers.kibana.rule: "Host(`kibana-elastic-ai.g2tech.co`)"
+      traefik.http.routers.kibana.tls.certresolver: "letsencrypt"
+      traefik.http.routers.kibana.entrypoints: "http,https"
+      traefik.http.services.kibana.loadbalancer.server.port: "5601"
+
+networks:
+  web: {}

@@ -1,0 +1,59 @@
+services:
+  wpdb:
+    image: mysql:8.0.34
+    container_name: blogdb
+    volumes:
+      - db_data:/var/lib/mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: example_password
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wordpress
+      MYSQL_PASSWORD: example_password
+
+  wordpress:
+    image: ""
+    container_name: blog
+    restart: always
+    depends_on:
+      - wpdb
+    mem_limit: 600m
+    cpus: 0.6
+    environment:
+      WORDPRESS_DB_HOST: wpdb:3306
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: example_password
+      WORDPRESS_DB_NAME: wordpress
+      WORDPRESS_CONFIG_EXTRA: |
+         define('CORE_UPGRADE_SKIP_NEW_BUNDLED', true);
+         define('AUTOMATIC_UPDATER_DISABLED', true);
+    networks:
+      - web
+    volumes:
+      - wpvolume:/var/www/html
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=web"
+      - "traefik.http.routers.wordpressblog.rule=Host(`example.com`) && Path(`/blog`)"
+      - "traefik.http.routers.wordpressblog.entrypoints=http,https"
+      - "traefik.http.routers.wordpressblog.tls.certresolver=letsencrypt"
+      - "traefik.http.services.wordpressblog.loadbalancer.server.port=80"
+
+  phpmyadmin:
+      image: phpmyadmin/phpmyadmin
+      restart: always
+      depends_on:
+        - wpdb
+      environment:
+        PMA_HOST: wpdb
+        MYSQL_ROOT_PASSWORD: password 
+      networks:
+        - web
+
+networks:
+  web:
+    external: true
+
+volumes:
+  db_data:
+  wpvolume:
