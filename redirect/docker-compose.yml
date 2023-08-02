@@ -1,0 +1,13 @@
+redirect:
+    image: traefik/whoami
+    container_name: "blog-redirect"
+    restart: always
+    cpus: 0.25
+    mem_limit: 50m
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.redirect.rule=Host(`example.com`) && Path(`/blog`)"
+      - "traefik.http.routers.redirect.entrypoints=web"
+      - "traefik.http.routers.redirect.middlewares=redirect-to-blog"
+      - "traefik.http.middlewares.redirect-to-blog.redirectregex.regex=^/blog/(.*)"
+      - "traefik.http.middlewares.redirect-to-blog.redirectregex.replacement=https://blog.example.com/$$1"
