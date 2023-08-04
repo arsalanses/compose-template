@@ -1,40 +1,39 @@
 services:
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.9
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.15.0
     container_name: elasticsearch
     environment:
       - node.name=elasticsearch
-      - cluster.name=es-docker
+      - cluster.name=es-docker-cluster
       - discovery.type=single-node
-      - xpack.security.enabled=true
-      - ELASTIC_PASSWORD=changeme
-      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
       - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - xpack.security.enabled=true
+      - ELASTIC_PASSWORD=your_password
     ulimits:
       memlock:
         soft: -1
         hard: -1
-    ports:
-      - 0.0.0.0:12121:9200
-      - 9300:9300
     volumes:
       - esdata:/usr/share/elasticsearch/data
+    ports:
+      - 127.0.0.1:9200:9200
     labels:
       - "traefik.enable=false"
 
   kibana:
-    image: docker.elastic.co/kibana/kibana:7.13.1
-    environment:
-      - ELASTICSEARCH_HOSTS="http://elasticsearch:9200"
-      - ELASTICSEARCH_URL="http://elasticsearch:9200"
-      - ELASTICSEARCH_USERNAME=elastic
-      - ELASTICSEARCH_PASSWORD=changeme
-    ports:
-      - '127.0.0.1:5601:5601'
+    image: docker.elastic.co/kibana/kibana:7.15.0
+    container_name: kibana
     networks:
       - 'web'
+    ports:
+      - 127.0.0.1:5601:5601
+    environment:
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+      ELASTICSEARCH_USERNAME: elastic
+      ELASTICSEARCH_PASSWORD: your_password
     depends_on:
-      - 'elasticsearch'
+      - elasticsearch
     labels:
       traefik.enable: "true"
       traefik.docker.network: "web"
@@ -43,9 +42,10 @@ services:
       traefik.http.routers.kibana.entrypoints: "http,https"
       traefik.http.services.kibana.loadbalancer.server.port: "5601"
 
+volumes:
+  esdata:
+    driver: local
+
 networks:
   web:
     external: true
-
-volumes:
-  esdata:
