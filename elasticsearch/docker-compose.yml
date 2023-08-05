@@ -1,6 +1,6 @@
 services:
   elasticsearch:
-    image: elasticsearch:7.13.1
+    image: elasticsearch:8.8.1
     container_name: elasticsearch
     environment:
       - discovery.type=single-node
@@ -13,7 +13,7 @@ services:
       - "traefik.enable=false"
 
   kibana:
-    image: kibana:7.13.1
+    image: kibana:8.8.1
     container_name: kibana
     networks:
       - 'web'
@@ -41,6 +41,5 @@ networks:
   web:
     external: true
 
-# docker compose up -d elasticsearch --force-recreate
-# docker compose exec -it elasticsearch /usr/share/elasticsearch/bin/elasticsearch-setup-passwords auto -u "http://localhost:9200"
-# docker compose up -d kibana --force-recreate
+# docker compose exec -it elasticsearch ./bin/elasticsearch-reset-password -u kibana_system
+# docker compose exec -it elasticsearch ./bin/elasticsearch-reset-password -u elastic
