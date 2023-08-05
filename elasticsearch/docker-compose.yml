@@ -45,3 +45,7 @@ networks:
 
 # docker compose exec -it elasticsearch ./bin/elasticsearch-reset-password -u kibana_system
 # docker compose exec -it elasticsearch ./bin/elasticsearch-reset-password -u elastic
+
+# docker compose exec -it kibana ./bin/kibana-keystore create
+# docker compose exec -it kibana ./bin/kibana-keystore add elasticsearch.password
+# docker compose exec -it kibana cat /usr/share/kibana/config/kibana.keystore
